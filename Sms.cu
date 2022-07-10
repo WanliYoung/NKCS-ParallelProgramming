@@ -94,6 +94,11 @@ __global__ void search(QueryIndex * querylist, _INDEX * idx, int QueryNum,int * 
 }
 
 int main() {
+    int deviceId;
+  int numberOfSMs;
+
+  cudaGetDevice(&deviceId);
+  cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, deviceId);
 struct timeval t1, t2;
 double timeuse = 0;
     size_t sizeresult = 1000 * sizeof(int);
@@ -164,8 +169,8 @@ double timeuse = 0;
 	//实现按表求交的平凡算法
 	int QueryNum = 10; //代表要处理的查询次数
     gettimeofday(&t1, NULL);
-	int threadnum = 10;
-    int blocknum = 1;
+	int threadnum = 1;
+    int blocknum = numberOfSMs * 32;
 	search<<<blocknum,threadnum>>>(querylist, idx, QueryNum,resultSize); 
 	cudaDeviceSynchronize();
     gettimeofday(&t2, NULL);
@@ -175,6 +180,7 @@ double timeuse = 0;
         cout<<resultSize[i]<<endl;
     }
 	for (j = 0;j < n;j++) free(idx[j].arr);
+
 	cudaFree(idx);
     cudaFree(querylist);
     cudaFree(resultSize);
